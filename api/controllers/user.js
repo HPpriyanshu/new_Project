@@ -26,38 +26,12 @@ export const signUp = async (req, res, next)=>{
             }
         })
 
-        //! creating the tenant record
-        const tenant = await prisma.tenant.create({
-            data : {
-                schema_name : `tenant_${user.id}`,
-                user_id : user.id
-            }
-        })
-
-
-        //! creating seperate tenant schema
-        const tenantSchema = `tenant_${user.id}`
-
-        await prisma.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS "${tenantSchema}";`)
-
-        const baseTable = ["users", "modules", "leads", "contacts", "accounts", "deals"]
-
-        //! create these 6 basic tables
-        for(const table of baseTable){
-            await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "${tenantSchema}"."${table}"(
-                id SERIAL PRIMARY KEY
-                )`
-            )
-        }
-
         const token = jwt.sign(
             {id : user.id},
             process.env.JWT_SECRET,
             {expiresIn : '30m'}
         )
-
-        // const setupLink = `https://frontend/set-password?token=${token}`;
-        // const setupLink = `http://localhost:5173/set-password?token=${token}`;
+        
         const setupLink = `http://localhost:3000/auth/set-password?token=${token}`;
 
         await sendMail(
@@ -72,6 +46,58 @@ export const signUp = async (req, res, next)=>{
         next(error)
     }
 
+}
+
+//! create-tenant schema
+export const createTenantSchema = async (req, res, next) =>{
+    const {email} = req.body
+    try {
+        if(!email) return next(errorHandler(UserError.Email_Required))
+
+         const user = await prisma.user.findUnique({
+            where : {email}
+         })   
+
+         if(!user) return next(errorHandler(UserError.Email_Not_Registered))
+
+         const existingTenant = await prisma.tenant.findUnique({
+            where : {user_id : user.id}
+         })   
+
+         if(existingTenant) return next(errorHandler(UserError.Tenant_Already_Exist))
+
+
+         //! creating the tenant record
+         const tenantSchema = `tenant_${user.id}`
+
+        await prisma.tenant.create({
+            data : {
+                schema_name : tenantSchema,
+                user_id : user.id
+            }
+        })
+
+
+        //! creating seperate tenant schema
+
+        await prisma.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS "${tenantSchema}";`)
+
+        const baseTable = ["users", "modules", "leads", "contacts", "accounts", "deals"]
+
+        //! create these 6 basic tables
+        for(const table of baseTable){
+            await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "${tenantSchema}"."${table}"(
+                id SERIAL PRIMARY KEY
+                )`
+            )
+        }   
+
+        res.status(HttpStatus.CREATED).json({message : `Tenant schema created for user with email ${email}`})
+
+    } catch (error) {
+        console.log("create tenant schema m h error", error)
+        next(error)
+    }
 }
 
 //! set Password
