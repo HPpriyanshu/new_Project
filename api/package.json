@@ -1,0 +1,31 @@
+{
+  "name": "my_crm_portal_be",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prisma:generate": "cross-env-shell \"set DATABASE_URL=$(node scripts/prestart-fetch-secrets.js) && npx prisma generate --schema=prisma/schema.prisma\"",
+    "prisma:migrate": "cross-env-shell \"set DATABASE_URL=$(node scripts/prestart-fetch-secrets.js) && npx prisma migrate deploy --schema=prisma/schema.prisma\"",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "cross-env": "^10.0.0",
+    "prisma": "^6.13.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.859.0",
+    "@prisma/client": "^6.13.0",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^7.0.5"
+  }
+}
