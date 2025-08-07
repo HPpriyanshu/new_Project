@@ -44,6 +44,11 @@ export const UserError = {
     InActive_Account : {
         message : "Your account is inactive",
         status : HttpStatus.FORBIDDEN
+    },
+
+    Tenant_Already_Exist : {
+        message : "Tenant_Already_Exist",
+        status : HttpStatus.BAD_REQUEST
     }
 
 }
